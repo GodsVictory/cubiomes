@@ -4,6 +4,10 @@
 #include <time.h>
 #include <signal.h>
 
+#ifdef WASM
+#undef USE_PTHREAD
+#endif
+
 struct compactinfo_t
 {
 	int64_t seedStart, seedEnd;
@@ -48,7 +52,9 @@ void intHandler()
 	exit(0);
 }
 
-#ifdef USE_PTHREAD
+#ifdef WASM
+int searchCompactBiomesThread(struct compactinfo_t *data)
+#elif USE_PTHREAD
 static void *searchCompactBiomesThread(void *data)
 #else
 static DWORD WINAPI searchCompactBiomesThread(LPVOID data)
@@ -81,10 +87,13 @@ static DWORD WINAPI searchCompactBiomesThread(LPVOID data)
 				long int seconds_passed = this_time - start_time;
 				float eta = (double)(total_seeds - count) / sps;
 				if (eta < 0 || percent_done < 0)
-					fprintf(stderr, "\rscanned: %10lli | viable: %3li | sps: %5.0lf | elapsed: %7.0lds", count, viable_count, sps, seconds_passed);
-				else
-					fprintf(stderr, "\rscanned: %10lli | viable: %3li | sps: %5.0lf | elapsed: %7.0lds | %3.2lf%% | eta: %7.0fs  ", count, viable_count, sps, seconds_passed, percent_done, eta);
-				fflush(stdout);
+					fprintf(stderr, "\rscanned: %10lli | filtered: %10li | viable: %3li | sps: %5.0lf | elapsed: %7.0lds", count, passed_filter, viable_count, sps, seconds_passed);
+				else                                                    
+					fprintf(stderr, "\rscanned: %10lli | filtered: %10li | viable: %3li | sps: %5.0lf | elapsed: %7.0lds | %3.2lf%% | eta: %7.0fs  ", count, passed_filter, viable_count, sps, seconds_passed, percent_done, eta);
+#ifdef WASM
+        fprintf(stderr, "\n");
+#endif
+				fflush(stderr);
 				last_time = this_time;
 				last_count = count;
 				last_viable_count = viable_count;
@@ -244,6 +253,7 @@ static DWORD WINAPI searchCompactBiomesThread(LPVOID data)
 	free(cache);
 
 #ifdef USE_PTHREAD
+  printf("pthread exit\n");
 	pthread_exit(NULL);
 #endif
 	return 0;
@@ -305,6 +315,9 @@ int main(int argc, char *argv[])
 	withHut = 1;
 	withMonument = 1;
 	total_seeds = (uint64_t)seedEnd - (uint64_t)seedStart;
+#ifdef WASM
+  threads = 1;
+#endif
 
 	printf("Starting search through seeds %" PRId64 " to %" PRId64 ", using %u threads.\n"
 		   "Search radius = %u.\n",
@@ -329,7 +342,9 @@ int main(int argc, char *argv[])
 	info[threads - 1].seedEnd = seedEnd;
 
 	// start threads
-#ifdef USE_PTHREAD
+#ifdef WASM
+  searchCompactBiomesThread(&info[0]);
+#elif USE_PTHREAD
 
 	for (t = 0; t < threads; t++)
 	{
@@ -351,7 +366,7 @@ int main(int argc, char *argv[])
 	WaitForMultipleObjects(threads, threadID, TRUE, INFINITE);
 
 #endif
-
+  printf("end\n");
 	char time_end[20];
 	time_t end_time = time(NULL);
 	strftime(time_end, 20, "%m/%d/%Y %H:%M:%S", localtime(&end_time));
