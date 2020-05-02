@@ -2,3 +2,8 @@ find_compactbiomes
 find_quadhuts
 .cproject
 .project
+*.o
+god
+*.exe
+*.csv
+*.ppm

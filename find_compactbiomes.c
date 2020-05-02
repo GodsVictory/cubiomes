@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
     int minscale;
 
     // arguments
-    if (argc <= 1)
+    if (argc <= 0)
     {
         printf( "find_compactbiomes [seed_start] [seed_end] [threads] [range]\n"
                 "\n"

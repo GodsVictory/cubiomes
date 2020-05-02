@@ -1920,7 +1920,7 @@ int64_t checkForBiomes(
 {
     Layer *lspecial = &g->layers[L_SPECIAL_1024];
     Layer *lmushroom = &g->layers[L_ADD_MUSHROOM_256];
-    Layer *lbiomes = &g->layers[L_BIOME_256];
+    Layer *lbiomes = &g->layers[L14_BAMBOO_256];
     Layer *loceantemp = NULL;
 
     int *map = cache ? cache : allocCache(&g->layers[L_VORONOI_ZOOM_1], width, height);

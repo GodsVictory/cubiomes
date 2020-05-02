@@ -7,9 +7,12 @@ void initBiomeTypeColours(unsigned char biomeColours[256][3]);
 int biomesToImage(unsigned char *pixels, 
         const unsigned char biomeColours[256][3], const int *biomes, 
         const unsigned int sx, const unsigned int sy, 
-        const unsigned int pixscale, const int flip);
+        const unsigned int pixscale, const int flip,
+        int alpha);
 
 int savePPM(const char* path, const unsigned char *pixels, 
+        const unsigned int sx, const unsigned int sy);
+int saveSVG(const char* path, const unsigned char *pixels, 
         const unsigned int sx, const unsigned int sy);
 
 #endif

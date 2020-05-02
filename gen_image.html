@@ -1,0 +1,44 @@
+<form onsubmit="gen(document.getElementById('seed').value); return false;">
+  <input type="text" id="seed">
+  <input type="submit">
+</form>
+<canvas height="512" width="512"  id="c"/></canvas>
+<script>
+// fall back to 52 bit number support in safari
+if (typeof BigInt !== 'function') {
+  window.BigInt = Number;
+}
+
+(async () => {
+  const response = await fetch('gen_image.wasm');
+  const wasm = await response.arrayBuffer();
+  const gen_image = await WebAssembly.compile(wasm);
+  const instance = await WebAssembly.instantiate(
+    gen_image,
+    {
+      wasi_snapshot_preview1: { 
+        fd_write(){},
+        fd_close(){},
+        fd_seek(){},
+        proc_exit(){},
+      }
+    },
+  );
+
+  const ctx = document.getElementById('c').getContext('2d');
+
+  window.gen = inputString => {
+    const seed = BigInt(inputString);
+
+    // extract low and high 32 bits because js ints are stupid
+    const lo = Number(seed & BigInt(0xFFFFFFFF)) >>> 0;
+    const hi = Math.floor(Number(seed / BigInt(4294967296))) >>> 0;
+    console.log(lo, hi);
+
+    const pointer = instance.exports.gen_image(lo, hi);
+    const data = new Uint8ClampedArray(instance.exports.memory.buffer, pointer, 512 * 512 * 4);
+    const img = new ImageData(data, 512, 512);
+    ctx.putImageData(img, 0, 0);
+  }
+})();
+</script>

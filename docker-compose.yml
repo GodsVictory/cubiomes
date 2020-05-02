@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+  cubiomes:
+    image: cubiomes
+    build: .
+    environment:
+      - GSF_START=1
+      - GSF_END=1000
+      - GSF_THREADS=1
+      - GSF_FILTER_RANGE=1500
+      - GSF_FULL_RANGE=2048

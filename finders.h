@@ -7,7 +7,7 @@
 #include <stdlib.h>
 
 #ifdef _WIN32
-#include <Windows.h>
+#include <windows.h>
 
 typedef HANDLE thread_id_t;
 
