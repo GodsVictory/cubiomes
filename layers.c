@@ -1625,9 +1625,8 @@ void mapOceanTemp(Layer *l, int * __restrict out, int areaX, int areaZ, int area
 /* Warning: this function is horribly slow compared to other layers! */
 void mapOceanMix(Layer *l, int * __restrict out, int areaX, int areaZ, int areaWidth, int areaHeight)
 {
-    int offset = 32 / l->scale;
-    int landX = areaX-offset, landZ = areaZ-offset;
-    int landWidth = areaWidth+offset+1, landHeight = areaHeight+offset+1;
+    int landX = areaX-8, landZ = areaZ-8;
+    int landWidth = areaWidth+17, landHeight = areaHeight+17;
     int *map1, *map2;
 
     if (l->p2 == NULL)
@@ -1651,7 +1650,7 @@ void mapOceanMix(Layer *l, int * __restrict out, int areaX, int areaZ, int areaW
     {
         for (x = 0; x < areaWidth; x++)
         {
-            int landID = map1[(x+offset) + (z+offset)*landWidth];
+            int landID = map1[(x+8) + (z+8)*landWidth];
             int oceanID = map2[x + z*areaWidth];
 
             if (!isOceanic(landID))
@@ -1660,11 +1659,11 @@ void mapOceanMix(Layer *l, int * __restrict out, int areaX, int areaZ, int areaW
                 continue;
             }
 
-            for (i = -offset; i <= offset; i += offset/2)
+            for (i = -8; i <= 8; i += 4)
             {
-                for (j = -offset; j <= offset; j += offset/2)
+                for (j = -8; j <= 8; j += 4)
                 {
-                    int nearbyID = map1[(x+i+offset) + (z+j+offset)*landWidth];
+                    int nearbyID = map1[(x+i+8) + (z+j+8)*landWidth];
 
                     if (isOceanic(nearbyID)) continue;
 

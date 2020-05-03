@@ -26,22 +26,8 @@ if (typeof BigInt !== 'function') {
   );
 
   const ctx = document.getElementById('c').getContext('2d');
-  const pointer = instance.exports.get_buffer(0);
-  const data = new Uint8ClampedArray(instance.exports.memory.buffer, pointer, 512 * 512 * 4);
-  const img = new ImageData(data, 512, 512);
 
   window.gen = inputString => {
-    if (inputString === 'LETSGO') {
-      let i = 0;
-      const render = () => {
-        instance.exports.gen_image(i++, 0);
-        ctx.putImageData(img, 0, 0);
-        requestAnimationFrame(render);
-      }
-      requestAnimationFrame(render);
-      return;
-    }
-
     const seed = BigInt(inputString);
 
     // extract low and high 32 bits because js ints are stupid
@@ -49,7 +35,9 @@ if (typeof BigInt !== 'function') {
     const hi = Math.floor(Number(seed / BigInt(4294967296))) >>> 0;
     console.log(lo, hi);
 
-    instance.exports.gen_image(lo, hi);
+    const pointer = instance.exports.gen_image(lo, hi);
+    const data = new Uint8ClampedArray(instance.exports.memory.buffer, pointer, 512 * 512 * 4);
+    const img = new ImageData(data, 512, 512);
     ctx.putImageData(img, 0, 0);
   }
 })();
