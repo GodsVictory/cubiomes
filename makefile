@@ -2,7 +2,7 @@ CC      = gcc
 AR      = ar
 ARFLAGS = cr
 override LDFLAGS = -lm
-override CFLAGS += -Wall -fwrapv -march=native
+override CFLAGS += -Wall -fwrapv -march=x86-64 -02
 #override CFLAGS += -DUSE_SIMD
 
 ifeq ($(OS),Windows_NT)
