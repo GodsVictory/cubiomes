@@ -10,18 +10,17 @@ ifeq ($(OS),Windows_NT)
 	RM = del
 else
 	override LDFLAGS += -pthread
-	#RM = rm
+	RM = rm
 endif
 
 .PHONY : all debug libcubiomes clean
 
-all: CFLAGS += -O3 -march=native
-all: god clean
+all: god searcher server libcubiomes find_compactbiomes find_quadhuts gen_image.wasm
 
 debug: CFLAGS += -DDEBUG -O0 -ggdb3
-debug: god clean
+debug: god
 
-libcubiomes: CFLAGS += -O3 -fPIC
+libcubiomes: CFLAGS += -fPIC
 libcubiomes: layers.o generator.o finders.o util.o
 	$(AR) $(ARFLAGS) libcubiomes.a $^
 
@@ -37,21 +36,18 @@ find_quadhuts: find_quadhuts.o layers.o generator.o finders.o
 find_quadhuts.o: find_quadhuts.c
 	$(CC) -c $(CFLAGS) $<
 
-god: CFLAGS += -O3 -march=native
 god: Gods_seedfinder.o layers.o generator.o finders.o util.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 Gods_seedfinder.o: Gods_seedfinder.c
 	$(CC) -c $(CFLAGS) $<
 
-searcher: CFLAGS += -O3 -march=native
 searcher: searcher.o layers.o generator.o finders.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 searcher.o: searcher.c
 	$(CC) -c $(CFLAGS) $<
 
-server: CFLAGS += -O3 -march=native
 server: server.o layers.o generator.o finders.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
@@ -77,5 +73,5 @@ util.o: util.c util.h
 	$(CC) -c $(CFLAGS) $<
 
 clean:
-	$(RM) *.o
+	$(RM) *.o searcher server god find_quadhuts find_compactbiomes libcubiomes gen_image.wasm
 
