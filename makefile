@@ -15,7 +15,7 @@ endif
 
 .PHONY : all debug libcubiomes clean
 
-all: god searcher server libcubiomes find_compactbiomes find_quadhuts gen_image.wasm
+all: god searcher analyzer libcubiomes find_compactbiomes find_quadhuts gen_image.wasm
 
 debug: CFLAGS += -DDEBUG -O0 -ggdb3
 debug: god
@@ -48,10 +48,10 @@ searcher: searcher.o layers.o generator.o finders.o
 searcher.o: searcher.c
 	$(CC) -c $(CFLAGS) $<
 
-server: server.o layers.o generator.o finders.o
+analyzer: analyzer.o layers.o generator.o finders.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-server.o: server.c
+analyzer.o: analyzer.c
 	$(CC) -c $(CFLAGS) $<
 
 gen_image.wasm: finders.c layers.c generator.c util.c gen_image.c

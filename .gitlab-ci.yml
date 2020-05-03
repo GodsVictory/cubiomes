@@ -10,15 +10,15 @@ build:
      - apt update && apt -y install make autoconf
   script:
     - make searcher
-    - make server
-    - x86_64-w64-mingw32-gcc -o server.exe layers.c generator.c finders.c util.c server.c
+    - make analyzer
+    - x86_64-w64-mingw32-gcc -o analyzer.exe layers.c generator.c finders.c util.c analyzer.c
     - x86_64-w64-mingw32-gcc -o searcher.exe layers.c generator.c finders.c util.c searcher.c
   artifacts:
     paths:
       - searcher
       - searcher.exe
-      - server
-      - server.exe
+      - analyzer
+      - analyzer.exe
       # depending on your build setup it's most likely a good idea to cache outputs to reduce the build time
       # cache:
       #   paths:
