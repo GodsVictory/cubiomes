@@ -6,6 +6,12 @@ long viable_count = 0;
 long passed_filter = 0;
 float step = 8;
 
+void exiter(int64_t s) {
+	printf("%"PRId64, s);
+	fflush(stdout);
+	exit(1);
+}
+
 int main(int argc, char *argv[])
 {
     initBiomes();
@@ -56,7 +62,7 @@ int main(int argc, char *argv[])
     int *cache = allocCache(&g.layers[L_VORONOI_ZOOM_1], w, h);
 
     if (!checkForBiomes(&g, cache, s, ax, az, w, h, filter, minscale))
-        return 1;
+        exiter(s);
 
     passed_filter++;
     applySeed(&g, s);
@@ -102,7 +108,7 @@ int main(int argc, char *argv[])
         }
     }
     if (!huts_found)
-        return 1;
+        exiter(s);
 
     int monument_count = 0;
     r = fullrange / MONUMENT_CONFIG.regionSize;
@@ -118,7 +124,7 @@ int main(int argc, char *argv[])
         }
     }
     if (monument_count == 0)
-        return 1;
+        exiter(s);
 
     int ocean_count = 0;
     // biome enum defined in layers.h
@@ -153,7 +159,7 @@ int main(int argc, char *argv[])
         if (biome_exists[i] != -1)
             all_biomes = 0;
     if (!all_biomes)
-        return 1;
+        exiter(s);
 
     //get spawn biome
     Pos spawn = getSpawn(MC_1_15, &g, cache, s);
@@ -203,7 +209,7 @@ int main(int argc, char *argv[])
     snprintf(out + strlen(out), 512 - strlen(out), ",%i", monument_count);
     for (int i = 0; i < sizeof(biome_percent_counter) / sizeof(int); i++)
         snprintf(out + strlen(out), 512 - strlen(out), ",%.2f", (biome_percent_counter[i] * (step * step) / (fw * fh)) * 100);
-    snprintf(out + strlen(out), 512 - strlen(out), "\n");
+    //snprintf(out + strlen(out), 512 - strlen(out), "\n");
     printf("%s", out);
     fflush(stdout);
 
