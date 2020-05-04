@@ -15,7 +15,7 @@ endif
 
 .PHONY : all debug libcubiomes clean
 
-all: god searcher analyzer libcubiomes find_compactbiomes find_quadhuts gen_image.wasm
+all: god searcher analyzer gen_image.wasm
 
 debug: CFLAGS += -DDEBUG -O0 -ggdb3
 debug: god

@@ -11,8 +11,8 @@ build:
   script:
     - make searcher
     - make analyzer
-    - x86_64-w64-mingw32-gcc -o analyzer.exe layers.c generator.c finders.c util.c analyzer.c
-    - x86_64-w64-mingw32-gcc -o searcher.exe layers.c generator.c finders.c util.c searcher.c
+    - x86_64-w64-mingw32-gcc -o analyzer.exe layers.c generator.c finders.c analyzer.c
+    - x86_64-w64-mingw32-gcc -o searcher.exe layers.c generator.c finders.c searcher.c
   artifacts:
     paths:
       - searcher
