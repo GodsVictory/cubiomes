@@ -2,7 +2,6 @@
 #include "generator.h"
 #include "math.h"
 #include <time.h>
-#include <signal.h>
 
 struct compactinfo_t
 {
