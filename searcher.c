@@ -3,7 +3,6 @@
 #include "math.h"
 #include <time.h>
 #include <signal.h>
-#include "util.h"
 
 struct compactinfo_t
 {
