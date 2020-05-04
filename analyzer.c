@@ -203,7 +203,7 @@ int main(int argc, char *argv[])
     snprintf(out + strlen(out), 512 - strlen(out), ",%i", monument_count);
     for (int i = 0; i < sizeof(biome_percent_counter) / sizeof(int); i++)
         snprintf(out + strlen(out), 512 - strlen(out), ",%.2f", (biome_percent_counter[i] * (step * step) / (fw * fh)) * 100);
-    //snprintf(out + strlen(out), 512 - strlen(out), "\n");
+    snprintf(out + strlen(out), 512 - strlen(out), "\n");
     printf("%s", out);
     fflush(stdout);
 
