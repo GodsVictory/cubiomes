@@ -7,3 +7,4 @@ god
 *.exe
 *.csv
 *.ppm
+build
