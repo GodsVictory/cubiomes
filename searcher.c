@@ -35,7 +35,7 @@ int raw = 0;
 #ifdef USE_PTHREAD
 static void *statTracker()
 #else
-static DWORD WINAPI statTracker()
+static DWORD WINAPI statTracker(LPVOID lpParameter)
 #endif
 {
     time_t last_time = time(NULL);
@@ -319,7 +319,7 @@ int main(int argc, char *argv[])
     }
 
     enum BiomeID biomes[] = {ice_spikes, bamboo_jungle, desert, plains, ocean, jungle, forest, mushroom_fields, mesa, flower_forest, warm_ocean, frozen_ocean, megaTaiga, roofedForest, extremeHills, swamp, savanna, icePlains};
-    filter = setupBiomeFilter(biomes,
+    filter = setupBiomeFilter((const int *)biomes,
                               sizeof(biomes) / sizeof(enum BiomeID));
     minscale = 256; // terminate search at this layer scale
     // TODO: simple structure filter
@@ -327,8 +327,8 @@ int main(int argc, char *argv[])
     withMonument = 1;
     start_time = time(NULL);
 
-    thread_id_t threadID[threads];
-    struct compactinfo_t info[threads];
+    thread_id_t *threadID = malloc(threads * sizeof(thread_id_t));
+    struct compactinfo_t *info = malloc(threads * sizeof(struct compactinfo_t));
 
     // store thread information
     if (seedStart == 0 && seedEnd == -1)
@@ -382,6 +382,9 @@ int main(int argc, char *argv[])
     exited = 1;
 
 #endif
+
+    free(info);
+    free(threadID);
 
     return 0;
 }

@@ -699,8 +699,8 @@ static DWORD WINAPI search4QuadBasesThread(LPVOID data)
 void search4QuadBases(const char *fnam, const int threads,
         const StructureConfig structureConfig, const int quality)
 {
-    thread_id_t threadID[threads];
-    quad_threadinfo_t info[threads];
+    thread_id_t *threadID = malloc(threads * sizeof(thread_id_t));
+    quad_threadinfo_t *info = malloc(threads * sizeof(quad_threadinfo_t));
     int64_t t;
 
     for (t = 0; t < threads; t++)
@@ -780,6 +780,8 @@ void search4QuadBases(const char *fnam, const int threads,
     }
 
     fclose(fp);
+    free(info);
+    free(threadID);
 }
 
 
