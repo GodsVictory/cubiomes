@@ -1,31 +1,44 @@
-# This file is a template, and might need editing before it works on your project.
-# use the official gcc image, based on debian
-# can use verions as well, like gcc:5.2
-# see https://hub.docker.com/_/gcc/
-image: mmozeiko/mingw-w64
-
-build:
-  stage: build
-  before_script:
-     - apt update && apt -y install make autoconf
+stages:
+  - build
+  
+.build_template: &os_build
+  tags: 
+    - crossbuild
   script:
-    - make searcher
-    - make analyzer
-    - x86_64-w64-mingw32-gcc -o analyzer.exe layers.c generator.c finders.c analyzer.c
-    - x86_64-w64-mingw32-gcc -o searcher.exe layers.c generator.c finders.c searcher.c
+    - docker run --rm -v $(pwd):/workdir -e CROSS_TRIPLE=$CROSS_TRIPLE multiarch/crossbuild make searcher
+    - docker run --rm -v $(pwd):/workdir -e CROSS_TRIPLE=$CROSS_TRIPLE multiarch/crossbuild make analyzer
+    - file searcher # Check that is for the right platform
   artifacts:
     paths:
       - searcher
-      - searcher.exe
       - analyzer
-      - analyzer.exe
-      # depending on your build setup it's most likely a good idea to cache outputs to reduce the build time
-      # cache:
-      #   paths:
-      #     - "*.o"
 
-# run tests using the binary built before
-#test:
-#  stage: test
-#  script:
-#    - ./runmytests.sh
+build:linux: # Linux
+  stage: build
+  variables:
+    CROSS_TRIPLE: amd64
+  <<: *os_build
+  
+build:linux:arm64: # Linux arm64
+  stage: build
+  variables:
+    CROSS_TRIPLE: arm64
+  <<: *os_build
+  
+build:linux:arm: # Linux arm32
+  stage: build
+  variables:
+    CROSS_TRIPLE: arm
+  <<: *os_build
+
+build:windows: # Windows
+  stage: build
+  variables:
+    CROSS_TRIPLE: windows
+  <<: *os_build
+  
+build:darwin: # MacOS
+  stage: build
+  variables:
+    CROSS_TRIPLE: darwin
+  <<: *os_build
