@@ -6,10 +6,11 @@ long viable_count = 0;
 long passed_filter = 0;
 float step = 8;
 
-void exiter(int64_t s) {
-	printf("%"PRId64, s);
-	fflush(stdout);
-	exit(1);
+void exiter(int64_t s)
+{
+    printf("%" PRId64, s);
+    fflush(stdout);
+    exit(1);
 }
 
 int main(int argc, char *argv[])
@@ -178,7 +179,7 @@ int main(int argc, char *argv[])
         for (x = -r; x < r; x++)
         {
             Pos p;
-            p = getLargeStructurePos(VILLAGE_CONFIG, s, x, z);
+            p = getStructurePos(VILLAGE_CONFIG, s, x, z);
             if (isViableVillagePos(g, cache, p.x, p.z))
                 if (abs(p.x) < fullrange && abs(p.z) < fullrange)
                     villages[village_count++] = p;
