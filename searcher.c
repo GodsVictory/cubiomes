@@ -90,7 +90,7 @@ static DWORD WINAPI statTracker(LPVOID lpParameter)
         fprintf(stderr, "\rscanned: %18" PRId64 " | viable: %3li | sps: %9.0lf | elapsed: %02i:%02i:%02i:%02i", count, viable_count, sps, elapsed_days, elapsed_hours, elapsed_minutes, elapsed_seconds);
         if (eta > 0 || percent_done > 0)
             fprintf(stderr, " | %6.2lf%% | eta: %02i:%02i:%02i:%02i  ", percent_done, eta_days, eta_hours, eta_minutes, eta_seconds);
-        fflush(stdout);
+        fflush(stderr);
         last_time = this_time;
         last_count = count;
         last_viable_count = viable_count;
