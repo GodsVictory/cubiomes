@@ -1,8 +1,8 @@
 stages:
   - build
-  
+
 .build_template: &os_build
-  tags: 
+  tags:
     - crossbuild
   script:
     - docker run --rm -v $(pwd):/workdir -e CROSS_TRIPLE=$CROSS_TRIPLE multiarch/crossbuild make searcher
@@ -18,13 +18,13 @@ build:linux: # Linux
   variables:
     CROSS_TRIPLE: amd64
   <<: *os_build
-  
+
 build:linux:arm64: # Linux arm64
   stage: build
   variables:
     CROSS_TRIPLE: arm64
   <<: *os_build
-  
+
 build:linux:arm: # Linux arm32
   stage: build
   variables:
@@ -36,7 +36,7 @@ build:windows: # Windows
   variables:
     CROSS_TRIPLE: windows
   <<: *os_build
-  
+
 build:darwin: # MacOS
   stage: build
   variables:

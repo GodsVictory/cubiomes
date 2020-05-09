@@ -142,9 +142,9 @@ static DWORD WINAPI searchCompactBiomesThread(LPVOID data)
                 {
                     Pos p;
                     p = getStructurePos(SWAMP_HUT_CONFIG, s, x, z);
-                    if (isViableFeaturePos(Swamp_Hut, g, cache, p.x, p.z))
+                    if (abs(p.x) < info.fullrange && abs(p.z) < info.fullrange)
                     {
-                        if (abs(p.x) < info.fullrange && abs(p.z) < info.fullrange)
+                        if (isViableFeaturePos(Swamp_Hut, g, cache, p.x, p.z))
                         {
                             huts[hut_count] = p;
                             hut_count++;
@@ -189,8 +189,8 @@ static DWORD WINAPI searchCompactBiomesThread(LPVOID data)
                 {
                     Pos p;
                     p = getLargeStructurePos(MONUMENT_CONFIG, s, x, z);
-                    if (isViableOceanMonumentPos(g, cache, p.x, p.z))
-                        if (abs(p.x) < info.fullrange && abs(p.z) < info.fullrange)
+                    if (abs(p.x) < info.fullrange && abs(p.z) < info.fullrange)
+                        if (isViableOceanMonumentPos(g, cache, p.x, p.z))
                             monument_count++;
                     if (monument_count > 0)
                         break;
