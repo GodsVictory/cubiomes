@@ -1,8 +1,8 @@
-CC      = gcc
+CC      = cc
 AR      = ar
 ARFLAGS = cr
 override LDFLAGS = -lm
-override CFLAGS += -Wall -fwrapv -std=c99 -O2
+override CFLAGS += -Wall -std=gnu99 -O2
 #override CFLAGS += -DUSE_SIMD
 
 ifeq ($(OS),Windows_NT)
