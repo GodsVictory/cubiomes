@@ -80,9 +80,9 @@ int main(int argc, char *argv[])
         {
             Pos p;
             p = getStructurePos(SWAMP_HUT_CONFIG, s, x, z);
-            if (isViableFeaturePos(Swamp_Hut, g, cache, p.x, p.z))
+            if (abs(p.x) < fullrange && abs(p.z) < fullrange)
             {
-                if (abs(p.x) < fullrange && abs(p.z) < fullrange)
+                if (isViableFeaturePos(Swamp_Hut, g, cache, p.x, p.z))
                 {
                     huts[hut_count] = p;
                     hut_count++;
@@ -119,8 +119,8 @@ int main(int argc, char *argv[])
         {
             Pos p;
             p = getLargeStructurePos(MONUMENT_CONFIG, s, x, z);
-            if (isViableOceanMonumentPos(g, cache, p.x, p.z))
-                if (abs(p.x) < fullrange && abs(p.z) < fullrange)
+            if (abs(p.x) < fullrange && abs(p.z) < fullrange)
+                if (isViableOceanMonumentPos(g, cache, p.x, p.z))
                     monument_count++;
         }
     }
@@ -180,8 +180,8 @@ int main(int argc, char *argv[])
         {
             Pos p;
             p = getStructurePos(VILLAGE_CONFIG, s, x, z);
-            if (isViableVillagePos(g, cache, p.x, p.z))
-                if (abs(p.x) < fullrange && abs(p.z) < fullrange)
+            if (abs(p.x) < fullrange && abs(p.z) < fullrange)
+                if (isViableVillagePos(g, cache, p.x, p.z))
                     villages[village_count++] = p;
         }
     }
