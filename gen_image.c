@@ -4,7 +4,7 @@
 
 unsigned char rgb[4*512*512];
 int *biomeCache;
-LayerStack g;
+LayerStack* g;
 Layer customOceanMix;
 unsigned char biomeColours[256][3];
 unsigned int areaWidth = 256, areaHeight = 256;
@@ -12,8 +12,8 @@ unsigned int areaWidth = 256, areaHeight = 256;
 
 unsigned char* EMSCRIPTEN_KEEPALIVE get_buffer() {
   initBiomes();
-	g = setupGenerator(MC_1_15);
-  setupMultiLayer(16, &customOceanMix, &g.layers[L_SHORE_16], &g.layers[L13_ZOOM_16], 100, mapOceanMix);
+  g = setupGenerator(MC_1_15);
+  setupMultiLayer(16, &customOceanMix, &g->layers[L_SHORE_16], &g->layers[L13_ZOOM_16], 100, mapOceanMix);
   // Allocate a sufficient buffer for the biomes and for the image pixels.
   biomeCache = allocCache(&customOceanMix, areaWidth, areaHeight);
   // Initialize a colour map for biomes.

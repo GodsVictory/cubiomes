@@ -944,13 +944,19 @@ int isTreasureChunk(int64_t seed, const int chunkX, const int chunkZ)
 //==============================================================================
 
 
-int getBiomeAtPos(const LayerStack g, const Pos pos)
+int getBiomeAtPos(const LayerStack* g, const Pos pos)
 {
-    int *map = allocCache(&g.layers[L_VORONOI_ZOOM_1], 1, 1);
-    genArea(&g.layers[L_VORONOI_ZOOM_1], map, pos.x, pos.z, 1, 1);
+    int *map = allocCache(&g->layers[L_VORONOI_ZOOM_1], 1, 1);
+    genArea(&g->layers[L_VORONOI_ZOOM_1], map, pos.x, pos.z, 1, 1);
     int biomeID = map[0];
     free(map);
     return biomeID;
+}
+
+int getBiomeAtPosWithCache(const LayerStack* g, const int x, const int z, int *map)
+{
+	genArea(&g->layers[L_VORONOI_ZOOM_1], map, x, z, 1, 1);
+	return map[0];
 }
 
 Pos findBiomePosition(
@@ -1035,7 +1041,7 @@ Pos findBiomePosition(
 
 
 int areBiomesViable(
-        const LayerStack    g,
+        const LayerStack *  g,
         int *               cache,
         const int           posX,
         const int           posZ,
@@ -1052,7 +1058,7 @@ int areBiomesViable(
     int i;
     int *map;
 
-    Layer *layer = &g.layers[L_RIVER_MIX_4];
+    Layer *layer = &g->layers[L_RIVER_MIX_4];
 
     if (layer->scale != 4)
     {
@@ -1273,7 +1279,7 @@ static double getGrassProbability(int64_t seed, int biome, int x, int z)
 
 static int canCoordinateBeSpawn(const int64_t seed, LayerStack *g, int *cache, Pos pos)
 {
-    int biome = getBiomeAtPos(*g, pos);
+    int biome = getBiomeAtPos(g, pos);
     return getGrassProbability(seed, biome, pos.x, pos.z) >= 0.5;
 }
 
@@ -1388,11 +1394,11 @@ Pos estimateSpawn(const int mcversion, LayerStack *g, int *cache, int64_t worldS
 //==============================================================================
 
 
-int isViableFeaturePos(const int structureType, const LayerStack g, int *cache,
+int isViableFeaturePos(const int structureType, const LayerStack* g, int *cache,
         const int blockX, const int blockZ)
 {
-    int *map = cache ? cache : allocCache(&g.layers[L_VORONOI_ZOOM_1], 1, 1);
-    genArea(&g.layers[L_VORONOI_ZOOM_1], map, blockX, blockZ, 1, 1);
+    int *map = cache ? cache : allocCache(&g->layers[L_VORONOI_ZOOM_1], 1, 1);
+    genArea(&g->layers[L_VORONOI_ZOOM_1], map, blockX, blockZ, 1, 1);
     int biomeID = map[0];
     if (!cache) free(map);
 
@@ -1417,7 +1423,7 @@ int isViableFeaturePos(const int structureType, const LayerStack g, int *cache,
     }
 }
 
-int isViableVillagePos(const LayerStack g, int *cache,
+int isViableVillagePos(const LayerStack* g, int *cache,
         const int blockX, const int blockZ)
 {
     static int isVillageBiome[0x100];
@@ -1434,7 +1440,7 @@ int isViableVillagePos(const LayerStack g, int *cache,
     return areBiomesViable(g, cache, blockX, blockZ, 0, isVillageBiome);
 }
 
-int isViableOceanMonumentPos(const LayerStack g, int *cache,
+int isViableOceanMonumentPos(const LayerStack* g, int *cache,
         const int blockX, const int blockZ)
 {
     static int isWaterBiome[0x100];
@@ -1458,7 +1464,7 @@ int isViableOceanMonumentPos(const LayerStack g, int *cache,
             areBiomesViable(g, cache, blockX, blockZ, 29, isWaterBiome);
 }
 
-int isViableMansionPos(const LayerStack g, int *cache,
+int isViableMansionPos(const LayerStack* g, int *cache,
         const int blockX, const int blockZ)
 {
     static int isMansionBiome[0x100];

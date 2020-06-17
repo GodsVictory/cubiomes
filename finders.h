@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -288,7 +289,13 @@ int isTreasureChunk(int64_t seed, const int chunkX, const int chunkZ);
 /* Returns the biome for the specified block position.
  * (Alternatives should be considered first in performance critical code.)
  */
-int getBiomeAtPos(const LayerStack g, const Pos pos);
+int getBiomeAtPos(const LayerStack* g, const Pos pos);
+
+/*
+ * Returns the biome for the specified block positon.
+ * Same as getBiomeAtPos, but takes coordinates and an already allocated cache.
+ */
+int getBiomeAtPosWithCache(const LayerStack* g, const int x, const int z, int *map);
 
 /* Finds a suitable pseudo-random location in the specified area.
  * This function is used to determine the positions of spawn and strongholds.
@@ -328,7 +335,7 @@ Pos findBiomePosition(
  * @isValid    : boolean array of valid biome ids (size = 256)
  */
 int areBiomesViable(
-        const LayerStack    g,
+        const LayerStack *  g,
         int *               cache,
         const int           posX,
         const int           posZ,
@@ -449,10 +456,10 @@ Pos estimateSpawn(const int mcversion, LayerStack *g, int *cache, int64_t worldS
  *
  * The return value is non-zero if the position is valid.
  */
-int isViableFeaturePos(const int type, const LayerStack g, int *cache, const int blockX, const int blockZ);
-int isViableVillagePos(const LayerStack g, int *cache, const int blockX, const int blockZ);
-int isViableOceanMonumentPos(const LayerStack g, int *cache, const int blockX, const int blockZ);
-int isViableMansionPos(const LayerStack g, int *cache, const int blockX, const int blockZ);
+int isViableFeaturePos(const int type, const LayerStack* g, int *cache, const int blockX, const int blockZ);
+int isViableVillagePos(const LayerStack* g, int *cache, const int blockX, const int blockZ);
+int isViableOceanMonumentPos(const LayerStack* g, int *cache, const int blockX, const int blockZ);
+int isViableMansionPos(const LayerStack* g, int *cache, const int blockX, const int blockZ);
 
 
 

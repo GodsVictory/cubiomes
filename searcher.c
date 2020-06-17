@@ -1,36 +1,44 @@
 #include "finders.h"
 #include "generator.h"
 #include "math.h"
+
 #include <time.h>
+#include <unistd.h>
 
 struct compactinfo_t
 {
-    int64_t seedStart, seedEnd;
+    int64_t seedEnd;
+    int64_t batchStart;
+    int64_t batchSize;
+    int64_t* currentSeed;
     unsigned int range;
     unsigned int fullrange;
     BiomeFilter filter;
     int withHut, withMonument;
     int minscale;
     int thread_id;
+
+    int step;
 };
 
-int64_t count = 0;
+int64_t currentSeed;
+
 int64_t c[128] = {0};
-int64_t last_count = 0;
 long viable_count = 0;
-long last_viable_count = 0;
-long passed_filter = 0;
-float sps = 0;
+
 char eta[20];
 time_t start_time;
 int64_t total_seeds = 0;
-float max_ocean = 25; //maximum amount of ocean allowed in percentage
-float step = 8;
-float min_major_biomes = 0; //minimum major biome percent
-int printing = 0;
+
+float global_step = 8;
 int exited = 0;
-int exit_counter = 0;
-int raw = 0;
+
+//These are not used
+float max_ocean = 25; //maximum amount of ocean allowed in percentage
+float min_major_biomes = 0; //minimum major biome percent
+//int raw = 0;
+//int exit_counter = 0;
+//int printing = 0;
 
 #ifdef USE_PTHREAD
 static void *statTracker()
@@ -38,6 +46,11 @@ static void *statTracker()
 static DWORD WINAPI statTracker(LPVOID lpParameter)
 #endif
 {
+    int64_t count = 0;
+//    long last_viable_count = 0;
+//    int64_t last_count = 0;
+    float sps = 0;
+
     time_t last_time = time(NULL);
     while (!exited)
     {
@@ -92,8 +105,11 @@ static DWORD WINAPI statTracker(LPVOID lpParameter)
             fprintf(stderr, " | %6.2lf%% | eta: %02i:%02i:%02i:%02i  ", percent_done, eta_days, eta_hours, eta_minutes, eta_seconds);
         fflush(stderr);
         last_time = this_time;
-        last_count = count;
-        last_viable_count = viable_count;
+//        last_count = count;
+//        last_viable_count = viable_count;
+
+        //Sleep, otherwise this thread costs as much as the worker threads.
+        sleep(1);
     }
 
 #ifdef USE_PTHREAD
@@ -109,141 +125,160 @@ static DWORD WINAPI searchCompactBiomesThread(LPVOID data)
 #endif
 {
     struct compactinfo_t info = *(struct compactinfo_t *)data;
+
+    // biome enum defined in layers.h
+    enum BiomeID req_biomes[] = {
+            ice_spikes, bamboo_jungle, desert, plains, ocean, jungle, forest,
+            mushroom_fields, mesa, flower_forest, warm_ocean, frozen_ocean,
+            megaTaiga, roofedForest, extremeHills, swamp, savanna, icePlains};
+    int biome_exists[sizeof(req_biomes) / sizeof(enum BiomeID)] = {0};
+    int biomeExistsLength = sizeof(biome_exists) / sizeof(int);
+    int biomeIdToIndexTable[LAST_BIOME];
+    int uniqueBiomes = sizeof(req_biomes) / sizeof(enum BiomeID);
+
+    int i;
+    for (i = 0; i < (sizeof(biomeIdToIndexTable) / sizeof(int)); i++)
+    {
+        biomeIdToIndexTable[i] = -1;
+    }
+
+    for (i = 0; i < biomeExistsLength; i++)
+    {
+        biomeIdToIndexTable[req_biomes[i]] = i;
+    }
+
     int ax = -info.range, az = -info.range;
     int w = 2 * info.range, h = 2 * info.range;
     int64_t s;
 
-    LayerStack g = setupGenerator(MC_1_15);
-    int *cache = allocCache(&g.layers[L_VORONOI_ZOOM_1], w, h);
+    LayerStack* g = setupGenerator(MC_1_15);
+    int *cache = allocCache(&g->layers[L_VORONOI_ZOOM_1], w, h);
+    int *cache2 = allocCache(&g->layers[L_VORONOI_ZOOM_1], 1, 1);
+    Pos huts[100];
 
-    for (s = info.seedStart; s != info.seedEnd; s++)
+    int64_t currentBatchSize = info.batchSize;
+    int64_t batchStart = info.batchStart;
+    int64_t batchStop = batchStart + currentBatchSize;
+
+    while (batchStart < info.seedEnd)
     {
-        if (exited)
-            break;
 
-        c[info.thread_id]++;
-
-        if (!checkForBiomes(&g, cache, s, ax, az, w, h, info.filter, info.minscale))
-            continue;
-
-        passed_filter++;
-        applySeed(&g, s);
-        int x, z;
-
-        int hut_count = 0;
-        if (info.withHut)
+        for (s = batchStart; s < batchStop; s++)
         {
-            Pos huts[100];
-            int huts_found = 0;
-            int r = info.fullrange / SWAMP_HUT_CONFIG.regionSize;
-            for (z = -r; z < r; z++)
-            {
-                for (x = -r; x < r; x++)
+            c[info.thread_id]++;
+            if (!checkForBiomes(g, cache, s, ax, az, w, h, info.filter, info.minscale)) {
+                continue;
+            }
+            applySeed(g, s);
+            int x, z;
+
+            if (info.withHut) {
+                int hut_count = 0;
+
+                int huts_found = 0;
+                int r = info.fullrange / SWAMP_HUT_CONFIG.regionSize;
+                for (z = -r; z < r; z++)
                 {
-                    Pos p;
-                    p = getStructurePos(SWAMP_HUT_CONFIG, s, x, z);
-                    if (abs(p.x) < info.fullrange && abs(p.z) < info.fullrange)
+                    for (x = -r; x < r; x++)
                     {
-                        if (isViableFeaturePos(Swamp_Hut, g, cache, p.x, p.z))
-                        {
+                        Pos p;
+                        p = getStructurePos(SWAMP_HUT_CONFIG, s, x, z);
+                        if (abs(p.x) < info.fullrange && abs(p.z) < info.fullrange
+                                && isViableFeaturePos(Swamp_Hut, g, cache, p.x, p.z)) {
                             huts[hut_count] = p;
                             hut_count++;
-                            for (int i = 0; i < hut_count; i++)
+                            if (hut_count < 2) {
+                                continue;
+                            }
+                            int last_hut = hut_count - 1;
+                            for (int i = 0; i < last_hut; i++)
                             {
-                                for (int j = 0; j < hut_count; j++)
-                                {
-                                    if (j == i)
-                                        continue;
-                                    float dx, dz;
-                                    dx = abs(huts[i].x - huts[j].x);
-                                    dz = abs(huts[i].z - huts[j].z);
-                                    if (sqrt((dx * dx) + (dz * dz)) <= 200)
-                                    {
-                                        huts_found = 1;
-                                    }
-                                    if (huts_found)
-                                        break;
+                                int dx, dz;
+                                dx = huts[i].x - huts[last_hut].x;
+                                dz = huts[i].z - huts[last_hut].z;
+                                if ((dx * dx) + (dz * dz) <= 40000) {
+                                    huts_found = 1;
+                                    goto afterHutsCheck;
                                 }
-                                if (huts_found)
-                                    break;
                             }
                         }
                     }
-                    if (huts_found)
-                        break;
                 }
-                if (huts_found)
-                    break;
-            }
-            if (!huts_found)
-                continue;
-        }
-
-        int monument_count = 0;
-        if (info.withMonument)
-        {
-            int r = info.fullrange / MONUMENT_CONFIG.regionSize;
-            for (z = -r; z < r; z++)
-            {
-                for (x = -r; x < r; x++)
-                {
-                    Pos p;
-                    p = getLargeStructurePos(MONUMENT_CONFIG, s, x, z);
-                    if (abs(p.x) < info.fullrange && abs(p.z) < info.fullrange)
-                        if (isViableOceanMonumentPos(g, cache, p.x, p.z))
-                            monument_count++;
-                    if (monument_count > 0)
-                        break;
+                if (!huts_found) {
+                    continue;
                 }
-                if (monument_count > 0)
-                    break;
             }
-            if (monument_count == 0)
-                continue;
-        }
+            afterHutsCheck:
 
-        // biome enum defined in layers.h
-        enum BiomeID req_biomes[] = {ice_spikes, bamboo_jungle, desert, plains, ocean, jungle, forest, mushroom_fields, mesa, flower_forest, warm_ocean, frozen_ocean, megaTaiga, roofedForest, extremeHills, swamp, savanna, icePlains};
-        int biome_exists[sizeof(req_biomes) / sizeof(enum BiomeID)] = {0};
-
-        int r = info.fullrange;
-        for (z = -r; z < r; z += step)
-        {
-            for (x = -r; x < r; x += step)
-            {
-                Pos p = {x, z};
-                int biome = getBiomeAtPos(g, p);
-                if (abs(x) < info.range && abs(z) < info.range)
+            if (info.withMonument) {
+                int monument_count = 0;
+                int r = info.fullrange / MONUMENT_CONFIG.regionSize;
+                for (z = -r; z < r; z++)
                 {
-                    for (int i = 0; i < sizeof(biome_exists) / sizeof(int); i++)
+                    for (x = -r; x < r; x++)
                     {
-                        if (biome == req_biomes[i])
-                            biome_exists[i] = -1;
-                        if (req_biomes[i] != -1)
-                            continue;
-                        break;
+                        Pos p;
+                        p = getLargeStructurePos(MONUMENT_CONFIG, s, x, z);
+                        if (abs(p.x) < info.fullrange && abs(p.z) < info.fullrange
+                            && isViableOceanMonumentPos(g, cache, p.x, p.z)) {
+                            monument_count++;
+                            goto afterMonumentCheck;
+                        }
+                    }
+                }
+                if (monument_count == 0) {
+                    continue;
+                }
+            }
+            afterMonumentCheck:
+
+            memset(&biome_exists, 0, sizeof(biome_exists));
+            int biomeCounter = 0;
+
+            // Unnecessary int cast removes warning in darwin build
+            int negative = abs((int) (info.range - info.fullrange) % info.step) - info.range;
+            int positive = info.range - info.step + abs((int) (info.range - info.fullrange) % info.step);
+
+            for (z = negative; z <= positive; z += info.step)
+            {
+                for (x = negative; x <= positive; x += info.step)
+                {
+                    int biome = getBiomeAtPosWithCache(g, x, z, cache2);
+                    int biomeInfo = biomeIdToIndexTable[biome];
+                    if (biomeInfo == -1 || biome_exists[biomeInfo]) {
+                        continue;
+                    }
+                    biome_exists[biomeInfo] = -1;
+                    ++biomeCounter;
+                    if (biomeCounter == uniqueBiomes) {
+                        goto afterBiomeCheck;
                     }
                 }
             }
+
+            if (biomeCounter < uniqueBiomes) {
+                continue;
+            }
+            afterBiomeCheck:
+
+            viable_count++;
+
+            fprintf(stderr, "\r%*c", 128, ' ');
+            fprintf(stdout, "\r%" PRId64 "\n", s);
+            fflush(stdout);
         }
 
-        //verify all biomes are present
-        int all_biomes = 1;
-        for (int i = 0; i < sizeof(req_biomes) / sizeof(enum BiomeID); i++)
-            if (biome_exists[i] != -1)
-                all_biomes = 0;
-        if (!all_biomes)
-            continue;
+        batchStart = __atomic_fetch_add(info.currentSeed, currentBatchSize, __ATOMIC_RELAXED);
+        batchStop = batchStart + currentBatchSize;
 
-        viable_count++;
-
-        fprintf(stderr, "\r%*c", 128, ' ');
-        printf("\r%" PRId64 "\n", s);
-        fflush(stdout);
+        if (batchStop > info.seedEnd) {
+            batchStop = info.seedEnd;
+        }
     }
 
     freeGenerator(g);
     free(cache);
+    free(cache2);
 
 #ifdef USE_PTHREAD
     pthread_exit(NULL);
@@ -331,32 +366,51 @@ int main(int argc, char *argv[])
     struct compactinfo_t *info = malloc(threads * sizeof(struct compactinfo_t));
 
     // store thread information
-    if (seedStart == 0 && seedEnd == -1)
-    {
+    if (seedStart == 0 && seedEnd == -1) {
         seedStart = -999999999999999999;
         seedEnd = 999999999999999999;
     }
+
+    currentSeed = seedStart;
+
+    int64_t* currentSeedAddress = &currentSeed;
+
     total_seeds = (uint64_t)seedEnd - (uint64_t)seedStart;
-    uint64_t seedCnt = ((uint64_t)seedEnd - (uint64_t)seedStart) / threads;
+    //uint64_t seedCnt = ((uint64_t)seedEnd - (uint64_t)seedStart) / threads;
+    uint64_t batchSize = (total_seeds / (threads * 10));
+    if (batchSize == 0) {
+        batchSize = 1;
+    } else if (batchSize > 10000000) {
+        batchSize = 10000000;
+    }
+
     for (t = 0; t < threads; t++)
     {
-        info[t].seedStart = (int64_t)(seedStart + seedCnt * t);
-        info[t].seedEnd = (int64_t)(seedStart + seedCnt * (t + 1));
+        info[t].currentSeed = currentSeedAddress;
+        info[t].batchSize = batchSize;
+        info[t].batchStart = seedStart + batchSize * t;
+        info[t].seedEnd = seedEnd;
+
         info[t].range = range;
         info[t].fullrange = fullrange;
+
         info[t].filter = filter;
         info[t].withHut = withHut;
         info[t].withMonument = withMonument;
         info[t].minscale = minscale;
+        info[t].step = global_step;
+
         info[t].thread_id = t;
     }
-    info[threads - 1].seedEnd = seedEnd;
+    currentSeed = currentSeed + batchSize * threads;
+
 
     // start threads
 #ifdef USE_PTHREAD
 
     pthread_t stats;
     pthread_create(&stats, NULL, statTracker, NULL);
+
 
     for (t = 0; t < threads; t++)
     {
@@ -367,7 +421,6 @@ int main(int argc, char *argv[])
     {
         pthread_join(threadID[t], NULL);
     }
-    exited = 1;
 
 #else
 
@@ -382,6 +435,8 @@ int main(int argc, char *argv[])
     exited = 1;
 
 #endif
+
+    exited = 1;
 
     free(info);
     free(threadID);
