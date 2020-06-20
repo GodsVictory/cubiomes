@@ -195,10 +195,10 @@ extern "C"
 #endif
 
 /* Initialise an instance of a generator. */
-LayerStack setupGenerator(const int mcversion);
+LayerStack* setupGenerator(const int mcversion);
 
 /* Cleans up and frees the generator layers */
-void freeGenerator(LayerStack g);
+void freeGenerator(LayerStack* g);
 
 
 /* Calculates the minimum size of the buffers required to generate an area of

@@ -128,8 +128,8 @@ static DWORD WINAPI searchCompactBiomesThread(LPVOID data)
 	int fw = 2 * info.fullrange, fh = 2 * info.fullrange;
 	int64_t s;
 
-	LayerStack g = setupGenerator(MC_1_15);
-	int *cache = allocCache(&g.layers[L_VORONOI_ZOOM_1], w, h);
+	LayerStack* g = setupGenerator(MC_1_15);
+	int *cache = allocCache(&g->layers[L_VORONOI_ZOOM_1], w, h);
 
 	for (s = info.seedStart; s != info.seedEnd; s++)
 	{
@@ -138,11 +138,11 @@ static DWORD WINAPI searchCompactBiomesThread(LPVOID data)
 
 		c[info.thread_id]++;
 
-		if (!checkForBiomes(&g, cache, s, ax, az, w, h, info.filter, info.minscale))
+		if (!checkForBiomes(g, cache, s, ax, az, w, h, info.filter, info.minscale))
 			continue;
 
 		passed_filter++;
-		applySeed(&g, s);
+		applySeed(g, s);
 		int x, z;
 
 		Pos goodhuts[2];
@@ -315,7 +315,7 @@ static DWORD WINAPI searchCompactBiomesThread(LPVOID data)
 			continue;
 
 		//get spawn biome
-		Pos spawn = getSpawn(MC_1_15, &g, cache, s);
+		Pos spawn = getSpawn(MC_1_15, g, cache, s);
 		int spawn_biome = getBiomeAtPos(g, spawn);
 		char *spawn_biome_string;
 		for (int i = 0; i < sizeof(biome_percent) / sizeof(enum BiomeID); i++)
@@ -431,7 +431,7 @@ static DWORD WINAPI searchCompactBiomesThread(LPVOID data)
 			initBiomeColours(biomeColours);
 
 			// Extract the desired layer.
-			Layer *layer = &g.layers[L_SHORE_16];
+			Layer *layer = &g->layers[L_SHORE_16];
 
 			int areaX = -128, areaZ = -128;
 			unsigned int areaWidth = 256, areaHeight = 256;

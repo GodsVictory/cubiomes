@@ -131,6 +131,9 @@ enum BiomeID
     crimson_forest                  = 171,
     warped_forest                   = 172,
     basalt_deltas                   = 173,
+
+    // Must be updated to always hold the last/highest value
+    LAST_BIOME                      = basalt_deltas,
 };
 
 enum BiomeType

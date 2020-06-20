@@ -28,17 +28,19 @@ void setupMultiLayer(int scale, Layer *l, Layer *p1, Layer *p2, int s, void (*ge
 
 
 
-LayerStack setupGenerator(const int mcversion)
+LayerStack* setupGenerator(const int mcversion)
 {
     if (biomes[plains].id == 0)
     {
         fprintf(stderr, "Warning: The biomes have to be initialised first using initBiomes() before any generator can be used.\n");
     }
 
-    LayerStack g;
-    g.layerCnt = L_NUM;
-    g.layers = (Layer *) calloc(g.layerCnt, sizeof(Layer));
-    Layer *l = g.layers;
+    LayerStack *g;
+    g = malloc(sizeof(LayerStack));
+    g->layerCnt = L_NUM;
+    g->layers = (Layer *) calloc(g->layerCnt, sizeof(Layer));
+
+    Layer *l = g->layers;
 
     //        SCALE  LAYER                      PARENT                      SEED  LAYER_FUNCTION
     setupLayer(4096, &l[L_ISLAND_4096],         NULL,                       1,    mapIsland);
@@ -129,16 +131,17 @@ LayerStack setupGenerator(const int mcversion)
 }
 
 
-void freeGenerator(LayerStack g)
+void freeGenerator(LayerStack* g)
 {
     int i;
-    for(i = 0; i < g.layerCnt; i++)
+    for(i = 0; i < g->layerCnt; i++)
     {
-        if (g.layers[i].oceanRnd != NULL)
-            free(g.layers[i].oceanRnd);
+        if (g->layers[i].oceanRnd != NULL)
+            free(g->layers[i].oceanRnd);
     }
 
-    free(g.layers);
+    free(g->layers);
+    free(g);
 }
 
 
@@ -200,8 +203,10 @@ int *allocCache(Layer *layer, int sizeX, int sizeZ)
 {
     int size = calcRequiredBuf(layer, sizeX, sizeZ);
 
-    int *ret = (int *) malloc(sizeof(*ret)*size);
-    memset(ret, 0, sizeof(*ret)*size);
+//    int *ret = (int *) malloc(sizeof(*ret)*size);
+//    memset(ret, 0, sizeof(*ret)*size);
+
+    int *ret = (int *) calloc(size, sizeof(*ret));
 
     return ret;
 }

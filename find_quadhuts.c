@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
     // Always initialize the biome list before starting any seed finder or
     // biome generator.
     initBiomes();
-    LayerStack g;
+    LayerStack* g;
 
     // Translate the positions to the desired regions.
     int regPosX = 0;
@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
         // since MC 1.7 except for some modified variants.
         g = setupGenerator(MC_1_7);
         // Use the 1.13 Hills layer to get the correct modified biomes.
-        g.layers[L_HILLS_64].getMap = mapHills113;
+        g->layers[L_HILLS_64].getMap = mapHills113;
     }
     else
     {
@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
     int64_t *qhcandidates = loadSavedSeeds(seedFileName, &qhcnt);
 
 
-    Layer *lFilterBiome = &g.layers[L_BIOME_256];
+    Layer *lFilterBiome = &g->layers[L_BIOME_256];
     int *biomeCache = allocCache(lFilterBiome, 3, 3);
 
 

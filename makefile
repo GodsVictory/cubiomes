@@ -73,5 +73,5 @@ util.o: util.c util.h
 	$(CC) -c $(CFLAGS) $<
 
 clean:
-	$(RM) *.o searcher server god find_quadhuts find_compactbiomes libcubiomes gen_image.wasm
+	$(RM) -f *.o searcher server god find_quadhuts find_compactbiomes libcubiomes gen_image.wasm
 

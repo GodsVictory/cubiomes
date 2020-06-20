@@ -59,14 +59,14 @@ int main(int argc, char *argv[])
     int w = 2 * range, h = 2 * range;
     int fw = 2 * fullrange, fh = 2 * fullrange;
 
-    LayerStack g = setupGenerator(MC_1_15);
-    int *cache = allocCache(&g.layers[L_VORONOI_ZOOM_1], w, h);
+    LayerStack* g = setupGenerator(MC_1_15);
+    int *cache = allocCache(&g->layers[L_VORONOI_ZOOM_1], w, h);
 
-    if (!checkForBiomes(&g, cache, s, ax, az, w, h, filter, minscale))
+    if (!checkForBiomes(g, cache, s, ax, az, w, h, filter, minscale))
         exiter(s);
 
     passed_filter++;
-    applySeed(&g, s);
+    applySeed(g, s);
     int x, z;
 
     //Pos goodhuts[2];
@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
         exiter(s);
 
     //get spawn biome
-    Pos spawn = getSpawn(MC_1_15, &g, cache, s);
+    Pos spawn = getSpawn(MC_1_15, g, cache, s);
     int spawn_biome = getBiomeAtPos(g, spawn);
     char *spawn_biome_string;
     for (int i = 0; i < sizeof(biome_percent) / sizeof(enum BiomeID); i++)
